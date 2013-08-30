@@ -1,6 +1,6 @@
 package io.springbatch.admin.version;
 
-import io.springbatch.admin.domain.CrudJobVersionRepository;
+import io.springbatch.admin.domain.JobVersionRepository;
 import io.springbatch.admin.domain.JobVersion;
 
 import java.io.ByteArrayOutputStream;
@@ -30,13 +30,11 @@ import org.springframework.context.ConfigurableApplicationContext;
 import com.thoughtworks.xstream.XStream;
 
 public class SimpleVersionService implements VersionService, ApplicationContextAware {
-
-	private XStream xstream = new XStream();
 	
 	private ConfigurableApplicationContext applicationContext;
 	
 	@Autowired
-	private CrudJobVersionRepository jobVersionRepository;
+	private JobVersionRepository jobVersionRepository;
 
 	@Override
 	public JobVersion getJobVersion(AbstractJob job) {
@@ -48,7 +46,6 @@ public class SimpleVersionService implements VersionService, ApplicationContextA
 		JobVersion jobVersion = new JobVersion();
 		jobVersion.setJobName(job.getName());
 		//hash the general configuration
-//		jobVersion.getBeanHash().put(job.getName(), Arrays.asList(Arrays.hashCode(xstream.toXML(job).getBytes())));
 		jobVersion.getBeanHash().put(job.getName(), Arrays.asList(this.hashStepFlow(job)));
 		//now hash the classes 'behind' the steps
 		for (String stepName : job.getStepNames()) {
@@ -85,7 +82,6 @@ public class SimpleVersionService implements VersionService, ApplicationContextA
 			jobVersion = jobVersionRepository.findByJobName(job.getName());
 		}//end if
 		//hash the job first and check
-		//TODO - always going to be different due to hashing repos' etc.
 		Integer jobInteger = hashStepFlow(job);
 		//check
 		List<Integer> existing = jobVersion.getBeanHash().get(job.getName());

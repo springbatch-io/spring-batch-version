@@ -6,7 +6,7 @@ import org.springframework.batch.core.job.AbstractJob;
 
 /**
  * return a job version object from a job
- * @author wschipp
+ * 
  *
  */
 public interface VersionService {

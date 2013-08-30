@@ -29,6 +29,7 @@
 	<bean id="deserializer" class="io.springbatch.admin.domain.support.DeserializationInterceptor"/>
 	
 	<jpa:repositories base-package="io.springbatch.admin.domain"/>
+
 	
 	<bean id="entityManagerFactory"
 		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
