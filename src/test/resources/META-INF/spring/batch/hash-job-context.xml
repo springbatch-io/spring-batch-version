@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:batch="http://www.springframework.org/schema/batch"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
+
+	<batch:job id="simpleJob">
+		<batch:step id="simpleJob.step1" next="simpleJob.step2">
+			<batch:tasklet ref="testTasklet"/>
+		</batch:step>
+		<batch:step id="simpleJob.step2">
+			<batch:tasklet>
+				<batch:chunk reader="simpleReader" processor="simpleProcessor" writer="simpleWriter" commit-interval="10"/>
+			</batch:tasklet>
+		</batch:step>
+	</batch:job>
+
+	<bean id="testTasklet" class="io.springbatch.admin.definition.version.SimpleTasklet"/>
+	
+	<bean id="jobExplorer"
+		class="org.springframework.batch.core.explore.support.MapJobExplorerFactoryBean">
+		<property name="repositoryFactory" ref="&amp;jobRepository"/>
+	</bean>
+	<bean id="jobRepository"
+		class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean">
+	</bean>
+	<bean id="jobLauncher"
+		class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository"/>
+		<property name="taskExecutor" ref="taskExecutor"/>
+	</bean>
+	
+	<bean id="string" class="java.lang.String">
+		<constructor-arg value="hello world"/>
+	</bean>	
+	
+	<bean id="transactionManager" class="org.springframework.batch.support.transaction.ResourcelessTransactionManager"/>
+	
+	<task:executor id="taskExecutor"/>
+	<bean id="simpleReader"
+		class="org.springframework.batch.item.adapter.ItemReaderAdapter">
+		<property name="targetObject" ref="string"/>
+		<property name="targetMethod" value="length"/>
+	</bean>
+
+	<bean id="simpleWriter"
+		class="org.springframework.batch.item.adapter.ItemWriterAdapter">
+		<property name="targetObject" ref="string"/>
+		<property name="targetMethod" value="length"/>
+	</bean>	
+	<bean id="simpleProcessor"
+		class="org.springframework.batch.item.adapter.ItemProcessorAdapter">
+		<property name="targetObject" ref="string"/>
+		<property name="targetMethod" value="length"/>
+		
+	</bean>
+</beans>

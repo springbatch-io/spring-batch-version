@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<context:component-scan base-package="io.springbatch.admin"/>
+
+	<aop:config>
+		<aop:advisor advice-ref="serializer" pointcut="execution(* io.springbatch.admin.domain.CrudJobVersionRepository.save(..))"/>
+		<aop:advisor advice-ref="deserializer" pointcut="execution(* io.springbatch.admin.domain.CrudJobVersionRepository.find*(..))"/>
+	</aop:config>
+
+	<bean id="versionService" class="io.springbatch.admin.version.SimpleVersionService"/>
+
+	<bean id="serializer" class="io.springbatch.admin.domain.support.SerializationInterceptor"/>
+	
+	<bean id="deserializer" class="io.springbatch.admin.domain.support.DeserializationInterceptor"/>
+	
+	<jpa:repositories base-package="io.springbatch.admin.domain"/>
+	
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+<!-- 		<property name="dataSource" ref="dataSource"/> -->
+		<property name="packagesToScan" value="io.springbatch.admin.domain"/>
+		<property name="jpaVendorAdapter" ref="jpaVendorAdapter"/>
+		<property name="jpaProperties" ref="jpaProperties"/>
+	</bean>
+	
+	<tx:annotation-driven/>
+	
+	<beans profile="junit">
+		<bean id="jpaVendorAdapter"
+			class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+			<property name="generateDdl" value="true"/>
+		</bean>
+
+		<bean id="transactionManager"
+			class="org.springframework.orm.jpa.JpaTransactionManager">
+<!-- 			<property name="dataSource" ref="dataSource"/> -->
+			<property name="entityManagerFactory" ref="entityManagerFactory"/>
+		</bean>
+	
+		<jdbc:embedded-database id="dataSource" type="HSQL">
+			<jdbc:script location="classpath:/org/springframework/batch/core/schema-hsqldb.sql"/>
+		</jdbc:embedded-database>
+		
+		<util:properties id="jpaProperties"/>
+	</beans>
+	
+	<beans profile="sqlfire">
+		<bean id="dialect" class="com.vmware.sqlfire.hibernate.v4.v0.SQLFireDialect"/>
+		
+		<util:properties id="jpaProperties">
+			<prop key="hibernate.dialect">com.vmware.sqlfire.hibernate.v4.v0.SQLFireDialect</prop>
+			<prop key="hibernate.connection.driver_class">com.vmware.sqlfire.jdbc.ClientDriver</prop>
+			<prop key="hibernate.connection.url">jdbc:sqlfire://localhost:1527</prop>
+			<prop key="hibernate.connection.username">APP</prop>
+			<prop key="hibernate.connection.password">APP</prop>
+		</util:properties>
+	
+		<bean id="jpaVendorAdapter"
+			class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+			<property name="generateDdl" value="true"/>
+		</bean>
+
+		<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+			<property name="driverClassName" value="com.vmware.sqlfire.jdbc.ClientDriver"/>
+			<property name="url" value="jdbc:sqlfire://localhost:1527"/>
+		</bean>
+		
+		<bean id="transactionManager"
+			class="org.springframework.orm.jpa.JpaTransactionManager">
+<!-- 			<property name="dataSource" ref="dataSource"/> -->
+			<property name="entityManagerFactory" ref="entityManagerFactory"/>
+		</bean>
+		
+		<jdbc:initialize-database data-source="dataSource">
+			<jdbc:script location="classpath:/org/springframework/batch/core/schema-drop-sqlf.sql"/>
+			<jdbc:script location="classpath:/org/springframework/batch/core/schema-sqlf.sql"/>
+		</jdbc:initialize-database>		
+	</beans>
+
+
+</beans>
